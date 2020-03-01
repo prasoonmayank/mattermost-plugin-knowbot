@@ -94,6 +94,11 @@ func (p *Plugin) handleListCategories(cats []Category, args *model.CommandArgs) 
 	p.postCommandResponse(args, str)
 }
 
+func (p *Plugin) handleListDocs(docs []Doc, args *model.CommandArgs) {
+	str := convertDocsToStr(docs)
+	p.postCommandResponse(args, str)
+}
+
 func (p *Plugin) handleAddProject(args *model.CommandArgs, nameContent []string) {
 	var proj Project
 
@@ -108,6 +113,60 @@ func (p *Plugin) handleAddProject(args *model.CommandArgs, nameContent []string)
 	Projects = append(Projects, proj)
 	str := convertProjectsToStr(Projects)
 	p.postCommandResponse(args, "Updated Projects:\n"+str)
+}
+
+func (p *Plugin) handleAddDoc(args *model.CommandArgs, checkContent []string) {
+	var doc Doc
+
+	projName := ""
+	docContent := ""
+	catName := ""
+	curAddition := "doc"
+
+	for _, s := range checkContent {
+		if s == "'project'" {
+			curAddition = "project"
+			continue
+		} else if s == "'category'" {
+			curAddition = "category"
+			continue
+		}
+		if curAddition == "doc" {
+			docContent = docContent + " " + s
+		} else if curAddition == "project" {
+			projName = projName + " " + s
+		} else if curAddition == "category" {
+			catName = catName + " " + s
+		}
+	}
+
+	p.postCommandResponse(args, "Successfully added doc"+docContent+" for project "+projName)
+
+	var reqProj Project
+	var reqCategory Category
+
+	for _, p := range Projects {
+		if p.Name == projName {
+			reqProj = p
+			break
+		}
+	}
+	for _, c := range Categories {
+		if c.Name == catName {
+			reqCategory = c
+			break
+		}
+	}
+	doc.Id = model.NewId()
+	doc.Content = docContent
+	doc.ProjectId = reqProj.Id
+	doc.ProjectName = reqProj.Name
+	doc.CategoryId = reqCategory.Id
+	doc.CategoryName = reqCategory.Name
+
+	Docs = append(Docs, doc)
+	// str := "Successfully added"
+	// p.postCommandResponse(args, str)
 }
 
 func (p *Plugin) handleAddCategory(args *model.CommandArgs, nameContent []string) {
