@@ -7,6 +7,22 @@ import (
 	"github.com/mattermost/mattermost-server/v5/plugin"
 )
 
+func getHelp() string {
+	return `Available commands:
+	[command] [type]
+	command:
+		list -> List all of given type
+		add -> Add of the given type
+		remove -> Remove of the given typr
+		help -> Display help
+		ques -> Question
+	type:
+		project -> Command on all projects
+		category -> Command on all categories
+		doc -> Command on all docs
+	`
+}
+
 func getCommand() *model.Command {
 	return &model.Command{
 		Trigger:          botUsername,
@@ -55,6 +71,13 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		case "category":
 			p.handleAddCategory(args, split[2:])
 		}
+	case "remove":
+		switch actionType {
+		case "project":
+			p.handleRemoveProject(args, split[2:])
+		case "category":
+			p.handleRemoveCategory(args, split[2:])
+		}
 	}
 
 	p.postCommandResponse(args, "Command executed")
@@ -101,4 +124,40 @@ func (p *Plugin) handleAddCategory(args *model.CommandArgs, nameContent []string
 	Categories = append(Categories, cat)
 	str := convertCategoriesToStr(Categories)
 	p.postCommandResponse(args, "Updated Categories:\n"+str)
+}
+
+func (p *Plugin) handleRemoveProject(args *model.CommandArgs, nameContent []string) {
+	// var proj Project
+	nme := ""
+
+	for _, s := range nameContent {
+		nme = nme + " " + s
+	}
+
+	for index, p := range Projects {
+		if p.Name == nme {
+			Projects = append(Projects[:index], Projects[index+1:]...)
+		}
+	}
+
+	str := convertProjectsToStr(Projects)
+	p.postCommandResponse(args, "Updated Projects: \n"+str)
+}
+
+func (p *Plugin) handleRemoveCategory(args *model.CommandArgs, nameContent []string) {
+	// var cat Category
+	nme := ""
+
+	for _, s := range nameContent {
+		nme = nme + " " + s
+	}
+
+	for index, c := range Categories {
+		if c.Name == nme {
+			Categories = append(Categories[:index], Categories[index+1:]...)
+		}
+	}
+
+	str := convertCategoriesToStr(Categories)
+	p.postCommandResponse(args, "Updated Categories: \n"+str)
 }
